@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>OTPauth URI generator</title>
+  <style>
+  #qrcode {
+    margin-top: 15px;
+   }
+   span {
+     width: 80px;
+     float: left;
+   }
+   input[type="text"], select {
+     width: 260px;
+   }
+  </style>
+</head>
+
+<body>
+  <h1>OTPauth URI generator</h1>
+  <form>
+    <span>Type:</span><select id="type" onchange="toggleVisibility('counter_line')">
+      <option value="totp">TOTP</option>
+      <option value="hotp">HOTP</option>
+    </select><br />
+    <span>Label:</span><input id="label" type="text" placeholder="Google:john.doe@gmail.com" /><br />
+    <span>Secret:</span><input id="secret" type="text" placeholder="aaaabbbbccccdddd" /><br />
+    <span>Issuer:</span><input id="issuer" type="text" placeholder="Google" />
+    <input type="button" value="Advanced" onclick="toggleVisibility('advanced')" /><br />
+    <div id="advanced" style="display: none">
+      <span>Algorithm:</span><select id="algorithm">
+        <option value="">(default: SHA1)</option>
+        <option value="SHA1">SHA1</option>
+        <option value="SHA256">SHA256</option>
+        <option value="SHA512">SHA512</option>
+        <option value="MD5">MD5</option>
+      </select><br />
+      <span>Digits:</span><input id="digits" type="text" placeholder="6" /><br />
+      <div id="counter_line"><span>Counter:</span><input id="counter" type="text" placeholder="0" /></div>
+      <span>Period:</span><input id="period" type="text" placeholder="30" /><br />
+    </div>
+
+    <input type="button" value="Generate" onclick="makeCode()" />
+    <input type="reset" value="Reset" />
+  </form>
+
+  <div id="qrcode"></div><br />
+  <div id="uri"></div>
+
+  <!-- http://davidshimjs.github.com/qrcodejs/qrcode.min.js -->
+  <script src="qrcode.min.js"></script>
+
+  <script>
+  var qrcode = new QRCode('qrcode', {
+    width: 160,
+    height: 160,
+    colorDark : "#000000",
+    colorLight : "#ffffff",
+    correctLevel : QRCode.CorrectLevel.L
+  });
+
+  var s_type = document.getElementById('type');
+
+  function makeCode() {
+    var type = s_type.options[s_type.selectedIndex].value;
+    var label = document.getElementById('label').value;
+
+    var params = ['secret', 'issuer', 'algorithm', 'digits', 'counter', 'period'];
+
+    var p_array = [];
+    for (var i in params) {
+      var element = document.getElementById(params[i])
+      var val = element.type == 'text' ? element.value : element[element.selectedIndex].value;
+      if (val != "") {
+        p_array.push(params[i] + '=' + val);
+      }
+    }
+
+    // URI format: https://github.com/google/google-authenticator/wiki/Key-Uri-Format
+    var uri = "otpauth://" + type + "/" + label + "?" + p_array.join('&');
+
+    qrcode.makeCode(uri);
+    document.getElementById('uri').innerHTML = "URI: " + uri;
+  }
+
+  function toggleVisibility(e) {
+    console.log(e);
+    var cls = document.getElementById(e).style;
+
+    if (cls.display == 'none') {
+      cls.display = 'block';
+    } else {
+      cls.display = 'none';
+    }
+  }
+
+  toggleVisibility('counter_line');
+  </script>
+</body>
+</html>
